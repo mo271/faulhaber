@@ -18,22 +18,55 @@ open power_series
 #check exp ℚ
 def expk (k:ℕ) : power_series ℚ := power_series.mk (λ n, (k:ℚ)^n / n.factorial)
 
-theorem expand_tonelli (n:ℕ ):
-(finset.range n).sum(λ k, expk k) =
-power_series.mk (λ p, (finset.range n).sum(λ k, k^p)/p.factorial) := by sorry
+lemma power_series_addition (ha hb: ℕ → ℚ):
+power_series.mk(ha) + power_series.mk(hb) =
+power_series.mk(λ z, (ha z) + (hb z)) :=
+begin
+  ext,
+  simp [coeff_mk],
+end
+
+theorem expand_tonelli (n:ℕ):
+(finset.range n).sum(λ k, power_series.mk (λ n, (k:ℚ)^n / n.factorial)) =
+power_series.mk (λ p, (finset.range n).sum(λ k, k^p)/p.factorial) :=
+begin
+  induction n with n h,
+  { simp, refl },
+  rw [finset.sum_range_succ],
+  rw [h],
+  simp [power_series_addition],
+  ext,
+  simp only [coeff_mk, dif_pos, eq_self_iff_true, ne.def],
+  rw [finset.sum_range_succ],
+  rw [add_div],
+end
 
 theorem sum_inf_geo_seq (n:ℕ):
-(finset.range n).sum(λ k, expk k) * (1 - exp ℚ) = (1 - expk n) := by sorry
+(finset.range n).sum(λ k, expk k) * (1 - exp ℚ) = (1 - expk n) :=
+begin
+  sorry,
+end
 
 theorem expand_fraction (n:ℕ):
-(1 - expk n) * X * (exp ℚ - 1)  = (1 - exp ℚ) * (expk n - 1) * X := by sorry
+(1 - expk n) * X * (exp ℚ - 1)  = (1 - exp ℚ) * (expk n - 1) * X :=
+begin
+  induction n with n h,
+  sorry,
+end
 
 theorem right_series (n:ℕ):
-(expk n - 1) = X*power_series.mk (λ p, n^p.succ/(p.succ.factorial)) := by sorry
+(expk n - 1) = X*power_series.mk (λ p, n^p.succ/(p.succ.factorial)) :=
+begin
+  rw [power_series.X, mul_comm],
+  sorry,
+end
 
 theorem bernoulli_power_series':
   power_series.mk (λ n,
-  ((-1)^n* bernoulli n / nat.factorial n : ℚ)) * (exp ℚ - 1) = X := by sorry
+  ((-1)^n* bernoulli n / nat.factorial n : ℚ)) * (exp ℚ - 1) = X :=
+begin
+  sorry,
+end
 
 theorem cauchy_prod (n:ℕ):
 power_series.mk (λ p, (n:ℚ)^p.succ/(p.succ.factorial)) *
@@ -65,6 +98,26 @@ theorem faulhaber' (n p :ℕ):
  (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i))) :=
 begin
   sorry
+end
+
+lemma one_minus_b1: 1 - bernoulli 1 = bernoulli 1 :=
+begin
+  simp,
+  ring,
+end
+
+lemma bernoulli_odd (n:ℕ): odd n → bernoulli n = 0 :=
+begin
+  sorry,
+end
+
+
+lemma bernoulli_fst_snd (n:ℕ): n > 1 → bernoulli n = (-1)^n * bernoulli n :=
+begin
+  intro h,
+  by_cases odd n,
+  sorry,
+  sorry,
 end
 
 lemma faulhaber (n:ℕ) (p:ℕ):
