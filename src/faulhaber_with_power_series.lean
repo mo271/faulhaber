@@ -13,6 +13,10 @@ import ring_theory.power_series.basic
 
 open power_series
 
+lemma test:(constant_coeff ℚ) ((exp ℚ - 1) * X) = 0 :=
+begin
+  simp,
+end
 
 #check exp ℚ
 def expk (k:ℕ) : power_series ℚ := power_series.mk (λ n, (k:ℚ)^n / n.factorial)
@@ -62,26 +66,69 @@ begin
 end
 
 theorem bernoulli_power_series':
-  power_series.mk (λ n,
-  ((-1)^n* bernoulli n / nat.factorial n : ℚ)) * (exp ℚ - 1) = X :=
+  (exp ℚ - 1) * power_series.mk (λ n,
+  ((-1)^n* bernoulli n / nat.factorial n : ℚ)) = X :=
 begin
   sorry,
 end
 
-theorem cauchy_prod (n:ℕ):
-power_series.mk (λ p, (n:ℚ)^p.succ/(p.succ.factorial)) *
+
+lemma reduce_expk (n:ℕ ) {M: power_series ℚ}:
+( (exp ℚ - 1) * M = ((expk n) - 1)) → (M = (finset.range n).sum(λ k, expk k)):=
+begin
+  assume h,
+  sorry,
+end
+
+-- this is missing in mathlib?!
+theorem power_series_mul_assoc (φ₁ φ₂ φ₃ : (power_series ℚ)) :
+φ₁ * (φ₂ * φ₃) = φ₁ * φ₂ * φ₃ :=
+begin
+  sorry, -- use mv_power_series.mul_assoc and really check that this is not include
+end
+
+lemma hprodM (n:ℕ):
+((exp ℚ - 1)  *
+(power_series.mk (λ n,
+  ((-1)^n* bernoulli n / nat.factorial n : ℚ)) *
+  (power_series.mk (λ p, (n:ℚ)^p.succ/(p.succ.factorial)))) = ((expk n) - 1) :=
+begin
+  rw [power_series_mul_assoc],
+  rw [bernoulli_power_series'],
+  rw [right_series],
+end
+
+theorem expk_sum (n:ℕ):
 power_series.mk (λ n,
-  ((-1)^n* bernoulli n / nat.factorial n : ℚ)) =
+  ((-1)^n* bernoulli n / nat.factorial n : ℚ))*
+  power_series.mk (λ p, (n:ℚ)^p.succ/(p.succ.factorial))  =
+  (finset.range n).sum(λ k, expk k) :=
+begin
+  exact reduce_expk n (hprodM n),
+end
+
+theorem cauchy_prod (n:ℕ):
+power_series.mk (λ n,
+  ((-1)^n* bernoulli n / nat.factorial n : ℚ))*
+  power_series.mk (λ p, (n:ℚ)^p.succ/(p.succ.factorial))  =
  power_series.mk (λp,
  (1:ℚ)/((p.factorial)*(p + 1))*((finset.range p.succ).sum(λ i,
- (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)))) := by sorry
-
+ (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)))) :=
+begin
+  sorry,
+end
 
 theorem power_series_equal (n:ℕ):
 power_series.mk (λ p, (finset.range n).sum(λk, (k:ℚ)^p)/(p.factorial)) =
  power_series.mk (λp,
  (1:ℚ)/((p.factorial)*(p + 1))*((finset.range p.succ).sum(λ i,
- (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)))) := by sorry
+ (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)))) :=
+ begin
+   rw [←expand_tonelli],
+   rw [←cauchy_prod],
+   rw [expk_sum],
+   refl,
+ end
 
 theorem faulhaber_long' (n:ℕ): ∀ p,
 (coeff ℚ p) (power_series.mk (λ p, (finset.range n).sum(λk, (k:ℚ)^p)/(p.factorial))) =
@@ -92,18 +139,19 @@ theorem faulhaber_long' (n:ℕ): ∀ p,
    exact power_series.ext_iff.mp (power_series_equal n),
  end
 
+
+
 theorem faulhaber' (n p :ℕ):
 (finset.range n).sum(λk, (k:ℚ)^p) =
 ((finset.range p.succ).sum(λ i,
  (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)/p.succ)) :=
 begin
-  sorry
-end
-
-lemma one_minus_b1: 1 - bernoulli 1 = bernoulli 1 :=
-begin
-  simp,
-  ring,
+  have hfaulhaber_long': (coeff ℚ p) (power_series.mk (λ p, (finset.range n).sum(λk, (k:ℚ)^p)/(p.factorial))) =
+ (coeff ℚ p) (power_series.mk (λp,
+ (1:ℚ)/((p.factorial)*(p + 1))*((finset.range p.succ).sum(λ i,
+ (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)))))  := faulhaber_long' n p,
+ simp at hfaulhaber_long',
+ sorry, -- wait until known exactly where p.succ and 1/p.factorial pop up after Cauchy multiplication.
 end
 
 lemma bernoulli_odd (n:ℕ) (hn: 1 < n): odd n → bernoulli n = 0 :=
