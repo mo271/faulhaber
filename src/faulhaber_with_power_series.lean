@@ -112,17 +112,49 @@ power_series.mk (λ n,
   ((-1)^n* bernoulli n / nat.factorial n : ℚ))*
   power_series.mk (λ p, (n:ℚ)^p.succ/(p.succ.factorial))  =
  power_series.mk (λp,
- (1:ℚ)/((p.factorial)*(p + 1))*((finset.range p.succ).sum(λ i,
- (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)))) :=
+ ((finset.range p.succ).sum(λ i,
+ (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)/((p.factorial)*(p + 1))))) :=
 begin
-  sorry,
+  ext q,
+  rw [power_series.coeff_mul],
+  simp [power_series.coeff_mk],
+  let f: ℕ →  ℕ → ℚ := λ (a : ℕ), λ (b: ℕ),
+  (-1) ^ a * bernoulli a / ↑(a.factorial) *
+    (↑n ^ b.succ / ((↑(b) + 1) * ↑(b.factorial))),
+  rw [finset.nat.sum_antidiagonal_eq_sum_range_succ f],
+  have h: ∀ k:ℕ, (k ∈ (finset.range q.succ)) →
+   (f k (q - k) = (-1) ^ k * bernoulli k * ↑(q.succ.choose k) *
+  ↑n ^ (q + 1 - k) / (↑(q.factorial) * (↑q + 1)) ):=
+  begin
+    simp only [finset.mem_range],
+    intros k g,
+    simp [f],
+    ring,
+    have hfac:
+    ((↑(q - k) + 1) * ↑((q - k).factorial))⁻¹ * ↑n ^ (q - k).succ * (↑(k.factorial))⁻¹ =
+  (↑(q.factorial) * (↑q + (1:ℚ )))⁻¹ * ↑n ^ (q + 1 - k) * ↑(q.succ.choose k):=
+    begin
+      have exp_succ: (q - k).succ = (q + 1 - k) := by sorry,
+      rw [exp_succ],
+      have h_choose: (q.succ.choose k) = ((q + 1).factorial)/((k.factorial)*(q + 1 - k).factorial) := by sorry,
+      rw [h_choose],
+      have h_exp_fac2: (q + 1 - k).factorial
+        =((((q - k)).factorial)*(q - k +1)) := by sorry,
+      rw [h_exp_fac2],
+      rw [mul_comm],
+      ring,
+      sorry,
+    end,
+    rw [hfac],
+  end,
+  refine finset.sum_congr rfl _,
+  exact h,
 end
 
 theorem power_series_equal (n:ℕ):
 power_series.mk (λ p, (finset.range n).sum(λk, (k:ℚ)^p)/(p.factorial)) =
- power_series.mk (λp,
- (1:ℚ)/((p.factorial)*(p + 1))*((finset.range p.succ).sum(λ i,
- (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)))) :=
+ power_series.mk (λp,((finset.range p.succ).sum(λ i,
+ (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)/ ((p.factorial)*(p + 1))))) :=
  begin
    rw [←expand_tonelli],
    rw [←cauchy_prod],
@@ -133,13 +165,11 @@ power_series.mk (λ p, (finset.range n).sum(λk, (k:ℚ)^p)/(p.factorial)) =
 theorem faulhaber_long' (n:ℕ): ∀ p,
 (coeff ℚ p) (power_series.mk (λ p, (finset.range n).sum(λk, (k:ℚ)^p)/(p.factorial))) =
  (coeff ℚ p) (power_series.mk (λp,
- (1:ℚ)/((p.factorial)*(p + 1))*((finset.range p.succ).sum(λ i,
- (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)))))  :=
+ ((finset.range p.succ).sum(λ i, (-1)^i*(bernoulli i)*
+ (p.succ.choose i)*n^(p + 1 - i)/((p.factorial)*(p + 1)) ))))  :=
  begin
    exact power_series.ext_iff.mp (power_series_equal n),
  end
-
-
 
 theorem faulhaber' (n p :ℕ):
 (finset.range n).sum(λk, (k:ℚ)^p) =
