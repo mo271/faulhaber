@@ -8,6 +8,7 @@ import data.set.finite
 import number_theory.bernoulli
 import data.finset
 import data.finset.basic
+import data.nat.basic
 
 import ring_theory.power_series.basic
 
@@ -57,7 +58,10 @@ end
 
 lemma power_series_finset {n p : ℕ} (f: (ℕ → power_series ℚ)):
 (coeff ℚ p)((finset.range n).sum (λ (k : ℕ), f k))  =
-(finset.range n).sum (λ (k : ℕ),(coeff ℚ p) (f k)) := by sorry,
+(finset.range n).sum (λ (k : ℕ),(coeff ℚ p) (f k)) := 
+begin
+  simp [coeff_mk],
+end
 
 
 
@@ -66,8 +70,7 @@ theorem sum_inf_geo_seq (n:ℕ):
 begin
   ext,
   rw [power_series.coeff_mul],
-  rw [power_series_finset (λ (k : ℕ), expk k)],
-  sorry,
+
 end
 
 
@@ -125,7 +128,7 @@ end
 theorem power_series_mul_assoc (φ₁ φ₂ φ₃ : (power_series ℚ)) :
 φ₁ * (φ₂ * φ₃) = φ₁ * φ₂ * φ₃ :=
 begin
-  sorry, -- use mv_power_series.mul_assoc and really check that this is not include
+  rw mv_power_series.mul_assoc, -- it is not included
 end
 
 lemma hprodM (n:ℕ):
@@ -146,6 +149,49 @@ power_series.mk (λ n,
   (finset.range n).sum(λ k, expk k) :=
 begin
   exact reduce_expk n (hprodM n),
+end
+
+--difficultys due to subtraction in nat's
+lemma nat_sub (q k:ℕ) (g: k <q.succ): q - k + 1 =q + 1 -k :=
+begin
+  apply int.coe_nat_inj,
+  rw [int.coe_nat_add],
+  rw [←int.of_nat_eq_coe],
+  rw int.of_nat_sub,
+  refine eq.symm _,
+  rw [←int.of_nat_eq_coe],
+  rw int.of_nat_sub,
+  rw int.of_nat_add,
+  simp,
+  ring,
+  rw [nat.succ_eq_add_one] at g,
+  exact le_of_lt g,
+  rw [nat.succ_eq_add_one] at g,
+  rw nat.lt_add_one_iff at g,
+  exact g,
+end
+
+lemma exp_succ (q k :ℕ) (g: k <q.succ): (q - k).succ = (q + 1 - k) :=
+begin
+  rw nat.succ_eq_add_one, 
+  apply nat_sub,
+  exact g,
+end
+
+lemma  h_exp_fac2 (q k :ℕ)(g: k <q.succ): (q + 1 - k).factorial = ((((q - k)).factorial)*(q - k + 1)):=
+begin
+  rw nat_sub,
+  rw ← exp_succ,
+  rw nat.factorial_succ,
+  rw mul_comm,
+  exact g,
+  exact g,
+end
+
+lemma  h_choose (q k :ℕ)(g: k <q.succ): (q.succ.choose k) = ((q + 1).factorial)/((k.factorial)*(q + 1 - k).factorial) := 
+begin
+  rw nat.choose_eq_factorial_div_factorial,
+  exact le_of_lt g,
 end
 
 theorem cauchy_prod (n:ℕ):
@@ -175,12 +221,8 @@ begin
     ((↑(q - k) + 1) * ↑((q - k).factorial))⁻¹ * ↑n ^ (q - k).succ * (↑(k.factorial))⁻¹ =
   (↑(q.factorial) * (↑q + (1:ℚ )))⁻¹ * ↑n ^ (q + 1 - k) * ↑(q.succ.choose k):=
     begin
-      have exp_succ: (q - k).succ = (q + 1 - k) := by sorry,
       rw [exp_succ],
-      have h_choose: (q.succ.choose k) = ((q + 1).factorial)/((k.factorial)*(q + 1 - k).factorial) := by sorry,
       rw [h_choose],
-      have h_exp_fac2: (q + 1 - k).factorial
-        =((((q - k)).factorial)*(q - k +1)) := by sorry,
       rw [h_exp_fac2],
       rw [mul_comm],
       ring,
@@ -222,7 +264,7 @@ begin
  ((finset.range p.succ).sum(λ i, (-1)^i*(bernoulli i)*
  (p.succ.choose i)*n^(p + 1 - i)/((p.factorial)*(p + 1)) )))) := faulhaber_long' n p,
  simp at hfaulhaber_long',
- have hp: (p.factorial) ≠ 0:= by sorry,
+ have hp: (p.factorial) ≠ 0:= by apply nat.factorial_ne_zero,
  sorry,
 end
 
