@@ -14,13 +14,12 @@ import ring_theory.power_series.basic
 
 open power_series
 
-lemma test (a b c:ℚ  ) (h: c≠ 0):( a/c  = b/ c) → (a = b):=
+lemma test (a b c:ℚ):  (a + b) * c  = (a * c + b * c):=
 begin
-sorry,
+  convert add_mul a b c,
 end
 
 #check exp ℚ
-def expk (k:ℕ) : power_series ℚ := power_series.mk (λ n, (k:ℚ)^n / n.factorial)
 
 
 lemma power_series_addition (ha hb: ℕ → ℚ):
@@ -63,14 +62,60 @@ begin
   simp [coeff_mk],
 end
 
+def expk (k:ℕ) : power_series ℚ := power_series.mk (λ n, (k:ℚ)^n / n.factorial)
 
-
-theorem sum_inf_geo_seq (n:ℕ):
-(finset.range n).sum(λ k, expk k) * (1 - exp ℚ) = (1 - expk n) :=
+lemma expk' (k:ℕ): (exp ℚ)^k = expk k :=
 begin
+  induction k with k h,
+  rw [expk],
   ext,
-  rw [power_series.coeff_mul],
+  simp,
+  split_ifs,
+  { simp [h] },
+  { simp [h] },
+  simp only [pow_succ, h],
+  ext,
+  rw [coeff_mul],
+  simp [expk, exp],
+  sorry, -- binomial rewrite see `add_pow` or something similar
+end
 
+lemma expk_minus_one_coeff (n m:ℕ): (coeff ℚ m) ((expk n) - 1) =
+( if (m > 0) then ((coeff ℚ m) (expk n)) else (((coeff ℚ 0) (expk n) - 1) ) ):=
+begin
+  split_ifs with h h,
+  simp,
+  have hnm: ¬(m = 0) := by apply ne_of_gt h,
+  simp [hnm],
+  simp,
+  have hm: m = 0 := by linarith,
+  rw [hm],
+  simp,
+end
+
+
+
+lemma minus_one_minus_expk (n:ℕ): (1 - expk n) = - ((expk n) - 1) := by ring
+
+theorem sum_geo_seq (n:ℕ) (φ : (power_series ℚ)):
+((finset.range n).sum(λ k, φ^k) * (φ - 1)) = ((φ^n) - 1) :=
+begin
+  induction n with n h,
+  simp,
+  rw [finset.sum_range_succ],
+  rw [pow_succ'],
+  rw [add_mul],
+  rw [h],
+  ring,
+end
+
+theorem special_sum_inf_geo_seq (n:ℕ):
+ (exp ℚ - 1) * (finset.range n).sum(λ k, expk k) = ((expk n) - 1) :=
+begin
+  have hone: ((finset.range n).sum(λ k, (exp ℚ)^k) * ((exp ℚ) - 1)) =
+  (((exp ℚ)^n) - 1) := sum_geo_seq n ((exp ℚ)),
+  simp only [expk', mul_comm] at *,
+  exact hone,
 end
 
 
@@ -81,54 +126,60 @@ begin
   ring,
 end
 
+
 theorem right_series (n:ℕ):
 (expk n - 1) = X*power_series.mk (λ p, n^p.succ/(p.succ.factorial)) :=
 begin
-  rw [power_series.X, mul_comm],
+  ext,
+  rw [power_series.coeff_mul],
+  rw [expk_minus_one_coeff],
+  split_ifs with h_ge_zero h_zero,
+  rw [expk],
+  rw [power_series.coeff_mk],
+  simp [power_series.coeff_X],
+  --split antidiagonal into two pieces..,
   sorry,
+  have hn_1: n_1 = 0 := by linarith,
+  rw [expk],
+  simp only [hn_1],
+  rw [power_series.coeff_mk],
+  simp,
 end
 
 theorem bernoulli_power_series':
   (exp ℚ - 1) * power_series.mk (λ n,
-  ((-1)^n* bernoulli n / nat.factorial n : ℚ)) = X :=
+  ((-1)^n * bernoulli n / nat.factorial n : ℚ)) = X :=
 begin
+  ext n,
+  cases n,
+  simp,
+  simp only [coeff_mul, mul_comm X, coeff_succ_mul_X],
   sorry,
 end
 
 
-lemma reduce_expk (n:ℕ ) {M: power_series ℚ}:
-( (exp ℚ - 1) * M = ((expk n) - 1)) → (M = (finset.range n).sum(λ k, expk k)):=
+
+
+lemma reduce_expk (n:ℕ) {M N: power_series ℚ}
+(hM: (exp ℚ - 1) * M = ((expk n) - 1))
+(hN: (exp ℚ - 1) * N = ((expk n) - 1)):
+X*M = X*N :=
 begin
-  assume h,
-  rw [power_series.ext_iff] at h ⊢,
-  intro p,
-  have g: (coeff ℚ p) ((exp ℚ - 1) * M) = (coeff ℚ p) (expk n - 1)
-  := (h p),
-  rw [power_series.coeff_mul] at g,
-  rw [power_series_finset],
-  simp [expk],
-  have hone: (1: (power_series ℚ))  =
-  power_series.mk (λ k, if k = 0 then 1 else 0) := by sorry,
-  by_cases hp: p<1,
-  have hpzero: p = 0 := by linarith,
-  simp only [hpzero] at g,
-  simp only [expk] at g,
-  rw [hone] at g,
-  simp only [power_series_subtraction] at g,
-  simp [power_series.coeff_mk ] at g,
-  sorry, --not true in this case!?
-  simp only [expk] at g,
-  rw [hone] at g,
-  simp only [power_series_subtraction] at g,
-  simp [power_series.coeff_mk ] at g,
+  --plan: show (exp ℚ - 1) = X*J, with J invertible
   sorry,
+end
+
+lemma div_X {M N: power_series ℚ} (p:ℕ) (hp: 0<p) :
+X*M = X*N → ((coeff ℚ p) M = (coeff ℚ p) N) :=
+begin
+  simp,
 end
 
 -- this is missing in mathlib?!
 theorem power_series_mul_assoc (φ₁ φ₂ φ₃ : (power_series ℚ)) :
 φ₁ * (φ₂ * φ₃) = φ₁ * φ₂ * φ₃ :=
 begin
-  rw mv_power_series.mul_assoc, -- it is not included
+  rw mv_power_series.mul_assoc, --  I'm sure its somewhere
 end
 
 lemma hprodM (n:ℕ):
@@ -142,42 +193,13 @@ begin
   rw [right_series],
 end
 
-theorem expk_sum (n:ℕ):
-power_series.mk (λ n,
+theorem shifted_equal(n:ℕ):
+X*(power_series.mk (λ n,
   ((-1)^n* bernoulli n / nat.factorial n : ℚ))*
-  power_series.mk (λ p, (n:ℚ)^p.succ/(p.succ.factorial))  =
-  (finset.range n).sum(λ k, expk k) :=
+  (power_series.mk (λ p, (n:ℚ)^p.succ/(p.succ.factorial)))) =
+  X*(finset.range n).sum(λ k, expk k) :=
 begin
-  exact reduce_expk n (hprodM n),
-end
-
---difficultys due to subtraction in nat's
-lemma nat_sub (q k:ℕ) (g: k <q.succ): q - k + 1 =q + 1 -k :=
-begin
-  omega,
-end
-
-lemma exp_succ {q k :ℕ} (g: k <q.succ): (q - k).succ = (q + 1 - k) :=
-begin
-  rw nat.succ_eq_add_one,
-  apply nat_sub,
-  exact g,
-end
-
-lemma  h_exp_fac2 {q k :ℕ } (g: k <q.succ): (q + 1 - k).factorial = ((((q - k)).factorial)*(q - k + 1)):=
-begin
-  rw nat_sub,
-  rw ← exp_succ,
-  rw nat.factorial_succ,
-  rw mul_comm,
-  exact g,
-  exact g,
-end
-
-lemma  h_choose {q k :ℕ} (g: k <q.succ): (q.succ.choose k) = ((q + 1).factorial)/((k.factorial)*(q + 1 - k).factorial) :=
-begin
-  rw nat.choose_eq_factorial_div_factorial,
-  exact le_of_lt g,
+  exact reduce_expk n  (hprodM n) (special_sum_inf_geo_seq n),
 end
 
 theorem cauchy_prod (n:ℕ):
@@ -207,9 +229,26 @@ begin
     ((↑(q - k) + 1) * ↑((q - k).factorial))⁻¹ * ↑n ^ (q - k).succ * (↑(k.factorial))⁻¹ =
   (↑(q.factorial) * (↑q + (1:ℚ )))⁻¹ * ↑n ^ (q + 1 - k) * ↑(q.succ.choose k):=
     begin
-      rw [exp_succ g],
-      rw [h_choose g],
-      rw [h_exp_fac2 g],
+      have exp_succ: (q - k).succ = (q + 1 - k) := by omega,
+      rw [exp_succ],
+      have h_choose: (q.succ.choose k) =
+      ((q + 1).factorial)/((k.factorial)*(q + 1 - k).factorial) :=
+      begin
+        rw nat.choose_eq_factorial_div_factorial,
+        exact le_of_lt g,
+      end,
+      rw [h_choose],
+      have h_exp_fac2: (q + 1 - k).factorial
+        =((((q - k)).factorial)*(q - k +1)) :=
+        begin
+          have hqk1: q -k + 1 = (q - k).succ := by refl,
+          rw [hqk1],
+          rw [nat.mul_comm],
+          rw [←nat.factorial_succ],
+          have hq1: q + 1 - k = (q - k).succ := eq.symm exp_succ,
+          rw [hq1],
+        end,
+      rw [h_exp_fac2],
       rw [mul_comm ↑(q.factorial)],
       have hqqsucc: (q:ℚ)  + 1 = q.succ := by rw [←nat.cast_succ],
       simp only [hqqsucc],
@@ -231,26 +270,26 @@ begin
 end
 
 theorem power_series_equal (n:ℕ):
-power_series.mk (λ p, (finset.range n).sum(λk, (k:ℚ)^p)/(p.factorial)) =
- power_series.mk (λp,((finset.range p.succ).sum(λ i,
- (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)/ ((p.factorial)*(p + 1))))) :=
+X*(power_series.mk (λ p, (finset.range n).sum(λk, (k:ℚ)^p)/(p.factorial))) =
+ X*(power_series.mk (λ p,((finset.range p.succ).sum(λ i,
+ (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)/((p.factorial)*(p + 1)))))) :=
  begin
    rw [←expand_tonelli],
    rw [←cauchy_prod],
-   rw [expk_sum],
+   rw [shifted_equal],
    refl,
  end
 
-theorem faulhaber_long' (n:ℕ): ∀ p,
+theorem faulhaber_long' (n p:ℕ) (hp: 0 < p):
 (coeff ℚ p) (power_series.mk (λ p, (finset.range n).sum(λk, (k:ℚ)^p)/(p.factorial))) =
  (coeff ℚ p) (power_series.mk (λp,
  ((finset.range p.succ).sum(λ i, (-1)^i*(bernoulli i)*
- (p.succ.choose i)*n^(p + 1 - i)/((p.factorial)*(p + 1)) ))))  :=
+ (p.succ.choose i)*n^(p + 1 - i)/((p.factorial)*(p + 1))))))  :=
  begin
-   exact power_series.ext_iff.mp (power_series_equal n),
+   exact div_X p hp (power_series_equal n),
  end
 
-theorem faulhaber' (n p :ℕ):
+theorem faulhaber' (n p :ℕ)(hp: 0 <p) :
 (finset.range n).sum(λk, (k:ℚ)^p) =
 ((finset.range p.succ).sum(λ i,
  (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)/p.succ)) :=
@@ -258,7 +297,7 @@ begin
  have hfaulhaber_long': (coeff ℚ p) (power_series.mk (λ p, (finset.range n).sum(λk, (k:ℚ)^p)/(p.factorial))) =
  (coeff ℚ p) (power_series.mk (λp,
  ((finset.range p.succ).sum(λ i, (-1)^i*(bernoulli i)*
- (p.succ.choose i)*n^(p + 1 - i)/((p.factorial)*(p + 1)) )))) := faulhaber_long' n p,
+ (p.succ.choose i)*n^(p + 1 - i)/((p.factorial)*(p + 1)) )))) := faulhaber_long' n p hp,
  simp only [power_series.coeff_mk] at hfaulhaber_long',
  rw [div_eq_mul_inv] at hfaulhaber_long',
  rw [mul_comm ((p.factorial):ℚ ) _] at hfaulhaber_long',
@@ -267,6 +306,11 @@ begin
     (λ (i : ℕ), (-1) ^ i * bernoulli i * ↑(p.succ.choose i) * ↑n ^ (p + 1 - i))
     / ((↑p + 1) * ↑(p.factorial))) :=
     begin
+      --use finest.sum_mul and finset.sum_div repeately?
+      simp [hfaulhaber_long'],
+      --simp [finset.sum_mul (finset.range p.succ)
+      --(λ i, (-1) ^ i * bernoulli i * ↑(p.succ.choose i) * ↑n ^ (p + 1 - i)) (↑(p.factorial))],
+
       sorry -- use finset.sum_hom??
     end,
  clear hfaulhaber_long',
@@ -275,7 +319,11 @@ begin
  have hp: (p.factorial) ≠ 0:= nat.factorial_ne_zero p,
  cases hfl,
  simp,
- --simp [finset.sum_hom (finset.range n) (λ x:ℚ, x/((p:ℚ) +1))],
+ rw [hfl],
+ --use finest.sum_mul and finset.sum_div repeately?
+ let hf := λ q:ℚ, q/((p:ℚ ) + 1),
+ --rw [finset.sum_hom (finset.range p.succ) hf],
+ -- simp [finset.sum_mul],
  sorry,
  by_contradiction,
  exact hp hfl,
@@ -308,7 +356,7 @@ lemma faulhaber (n:ℕ) (p:ℕ) (hp: 0 <p):
 *n^(p + 1 - j)/(p.succ)))  :=
 begin
   rw [finset.sum_range_succ],
-  rw [faulhaber'],
+  rw [faulhaber' n p hp],
   have h2: (1:ℕ).succ ≤ p.succ :=
   begin
     apply nat.succ_le_succ,
