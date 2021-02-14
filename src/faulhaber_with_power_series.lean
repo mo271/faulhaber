@@ -14,9 +14,9 @@ import ring_theory.power_series.basic
 
 open power_series
 
-lemma test:(constant_coeff ℚ) ((exp ℚ - 1) * X) = 0 :=
+lemma test (a b c:ℚ  ) (h: c≠ 0):( a/c  = b/ c) → (a = b):=
 begin
-  simp,
+sorry,
 end
 
 #check exp ℚ
@@ -58,7 +58,7 @@ end
 
 lemma power_series_finset {n p : ℕ} (f: (ℕ → power_series ℚ)):
 (coeff ℚ p)((finset.range n).sum (λ (k : ℕ), f k))  =
-(finset.range n).sum (λ (k : ℕ),(coeff ℚ p) (f k)) := 
+(finset.range n).sum (λ (k : ℕ),(coeff ℚ p) (f k)) :=
 begin
   simp [coeff_mk],
 end
@@ -154,31 +154,17 @@ end
 --difficultys due to subtraction in nat's
 lemma nat_sub (q k:ℕ) (g: k <q.succ): q - k + 1 =q + 1 -k :=
 begin
-  apply int.coe_nat_inj,
-  rw [int.coe_nat_add],
-  rw [←int.of_nat_eq_coe],
-  rw int.of_nat_sub,
-  refine eq.symm _,
-  rw [←int.of_nat_eq_coe],
-  rw int.of_nat_sub,
-  rw int.of_nat_add,
-  simp,
-  ring,
-  rw [nat.succ_eq_add_one] at g,
-  exact le_of_lt g,
-  rw [nat.succ_eq_add_one] at g,
-  rw nat.lt_add_one_iff at g,
-  exact g,
+  omega,
 end
 
-lemma exp_succ (q k :ℕ) (g: k <q.succ): (q - k).succ = (q + 1 - k) :=
+lemma exp_succ {q k :ℕ} (g: k <q.succ): (q - k).succ = (q + 1 - k) :=
 begin
-  rw nat.succ_eq_add_one, 
+  rw nat.succ_eq_add_one,
   apply nat_sub,
   exact g,
 end
 
-lemma  h_exp_fac2 (q k :ℕ)(g: k <q.succ): (q + 1 - k).factorial = ((((q - k)).factorial)*(q - k + 1)):=
+lemma  h_exp_fac2 {q k :ℕ } (g: k <q.succ): (q + 1 - k).factorial = ((((q - k)).factorial)*(q - k + 1)):=
 begin
   rw nat_sub,
   rw ← exp_succ,
@@ -188,7 +174,7 @@ begin
   exact g,
 end
 
-lemma  h_choose (q k :ℕ)(g: k <q.succ): (q.succ.choose k) = ((q + 1).factorial)/((k.factorial)*(q + 1 - k).factorial) := 
+lemma  h_choose {q k :ℕ} (g: k <q.succ): (q.succ.choose k) = ((q + 1).factorial)/((k.factorial)*(q + 1 - k).factorial) :=
 begin
   rw nat.choose_eq_factorial_div_factorial,
   exact le_of_lt g,
@@ -221,11 +207,21 @@ begin
     ((↑(q - k) + 1) * ↑((q - k).factorial))⁻¹ * ↑n ^ (q - k).succ * (↑(k.factorial))⁻¹ =
   (↑(q.factorial) * (↑q + (1:ℚ )))⁻¹ * ↑n ^ (q + 1 - k) * ↑(q.succ.choose k):=
     begin
-      rw [exp_succ],
-      rw [h_choose],
-      rw [h_exp_fac2],
-      rw [mul_comm],
-      ring,
+      rw [exp_succ g],
+      rw [h_choose g],
+      rw [h_exp_fac2 g],
+      rw [mul_comm ↑(q.factorial)],
+      have hqqsucc: (q:ℚ)  + 1 = q.succ := by rw [←nat.cast_succ],
+      simp only [hqqsucc],
+      have hcoeq: ((q.succ):ℚ) * ((q.factorial):ℚ) =(((q.succ.factorial:ℕ)):ℚ) := by norm_cast,
+      rw [hcoeq],
+      rw [mul_comm (↑(q.succ.factorial))⁻¹ ],
+      rw [mul_assoc ((n:ℚ) ^ (q + 1 - k))],
+      simp only [div_eq_mul_inv],
+      have hqfac: (((((q:ℕ)  + 1).factorial /
+       ((k.factorial:ℕ) * (((q - k).factorial:ℕ) * ((q - k):ℕ) + (1:ℕ) ):ℕ))):ℚ )
+      =  (((q + 1).factorial:ℚ)  / ((k.factorial:ℚ)  * ((q - k).factorial * (q - k + 1)))) := by sorry,
+      --rw [hqfac], -- doesn't work because lean somehow knows that the fraction from "choose" is in fact an integer...
       sorry,
     end,
     rw [hfac],
@@ -263,9 +259,26 @@ begin
  (coeff ℚ p) (power_series.mk (λp,
  ((finset.range p.succ).sum(λ i, (-1)^i*(bernoulli i)*
  (p.succ.choose i)*n^(p + 1 - i)/((p.factorial)*(p + 1)) )))) := faulhaber_long' n p,
- simp at hfaulhaber_long',
- have hp: (p.factorial) ≠ 0:= by apply nat.factorial_ne_zero,
+ simp only [power_series.coeff_mk] at hfaulhaber_long',
+ rw [div_eq_mul_inv] at hfaulhaber_long',
+ rw [mul_comm ((p.factorial):ℚ ) _] at hfaulhaber_long',
+ have hfl: (finset.range n).sum (λ (k : ℕ), ↑k ^ p) * (↑(p.factorial))⁻¹ =
+  ((finset.range p.succ).sum
+    (λ (i : ℕ), (-1) ^ i * bernoulli i * ↑(p.succ.choose i) * ↑n ^ (p + 1 - i))
+    / ((↑p + 1) * ↑(p.factorial))) :=
+    begin
+      sorry -- use finset.sum_hom??
+    end,
+ clear hfaulhaber_long',
+ rw [div_mul_eq_div_mul_one_div ] at hfl,
+ simp at hfl,
+ have hp: (p.factorial) ≠ 0:= nat.factorial_ne_zero p,
+ cases hfl,
+ simp,
+ --simp [finset.sum_hom (finset.range n) (λ x:ℚ, x/((p:ℚ) +1))],
  sorry,
+ by_contradiction,
+ exact hp hfl,
 end
 
 lemma bernoulli_odd (n:ℕ) (hn: 1 < n): odd n → bernoulli n = 0 :=
