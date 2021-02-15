@@ -146,15 +146,79 @@ begin
   simp,
 end
 
+
+
+lemma minus_X_fw (φ ψ: power_series ℚ):
+(φ = ψ) →  (
+  mk(λ n, (-1)^n*(coeff ℚ n) φ) =
+  mk(λ n, (-1)^n*(coeff ℚ n) ψ)) :=
+begin
+  rintro rfl,
+  refl,
+ end
+
+
+
+lemma minus_X (φ ψ: power_series ℚ):
+(φ = ψ) ↔  (
+  mk(λ n, (-1:ℚ)^n*(coeff ℚ n) φ) =
+  mk(λ n, (-1)^n*(coeff ℚ n) ψ)) :=
+begin
+  split,
+  exact minus_X_fw φ ψ,
+  intro h,
+  have g: mk(λ n,
+  (-1:ℚ)^n*(coeff ℚ n) (mk(λ n, (-1)^n*(coeff ℚ n) φ))) =
+  mk(λ n,
+  (-1)^n*(coeff ℚ n) (mk(λ n, (-1)^n*(coeff ℚ n) ψ))) := (minus_X_fw (mk(λ n, (-1)^n*(coeff ℚ n) φ))
+  (mk(λ n, (-1)^n*(coeff ℚ n) ψ))) h,
+  simp at g,
+  sorry,
+ end
+
+ lemma minus_X_mul (φ ψ: power_series ℚ):
+ (mk(λ n, (-1:ℚ)^n*(coeff ℚ n) φ) *  mk(λ n, (-1)^n*(coeff ℚ n) ψ)) =
+ mk(λ n, (-1)^n*(coeff ℚ n) (φ*ψ)) := by sorry
+
+
+lemma expmxm1: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (exp ℚ - 1)) =
+ (1 - exp ℚ)* mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) := by sorry
+
+lemma aux_exp2: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (X * exp ℚ)) =
+(-X)*mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) := by sorry,
+
 theorem bernoulli_power_series':
   (exp ℚ - 1) * power_series.mk (λ n,
   ((-1)^n * bernoulli n / nat.factorial n : ℚ)) = X :=
 begin
-  ext n,
-  cases n,
+  have h: power_series.mk (λ n, (bernoulli n / nat.factorial n : ℚ)) * (exp ℚ - 1)
+  = X * exp ℚ := by sorry,
+  rw minus_X at h,
+  rw ←minus_X_mul at h,
+  rw [expmxm1] at h,
+  rw [aux_exp2] at h,
+  let f1 := mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (mk (λ (n : ℕ), bernoulli n / ↑(n.factorial)))),
+  let f2 := 1 - exp ℚ,
+  let f3 := mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)),
+  rw [←(mul_assoc f1 f2 f3)] at h,
+  have hf3: f3 = mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) := by refl,
+  rw [←hf3] at h,
+  have hf3_nonzero: f3≠ 0 := by sorry,
+  have g: f1*f2 = -X :=
+  begin
+    apply mul_right_cancel' hf3_nonzero h,
+  end,
+  have hf1: f1 = mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (mk (λ (n : ℕ), bernoulli n / ↑(n.factorial)))) := by refl,
+  simp at hf1,
+  have hf1': f1 =mk (λ (n : ℕ), (-1) ^ n * bernoulli n / ↑(n.factorial)) := by sorry,
+  rw [←hf1'],
+  have hf2: -f2 = (exp ℚ - 1):= by sorry,
+  rw [←hf2],
+  rw [←neg_one_mul],
+  rw [mul_assoc],
+  rw [mul_comm f2],
+  rw [g],
   simp,
-  simp only [coeff_mul, mul_comm X, coeff_succ_mul_X],
-  sorry,
 end
 
 
@@ -170,9 +234,11 @@ begin
 end
 
 lemma div_X {M N: power_series ℚ} (p:ℕ) (hp: 0<p) :
-X*M = X*N → ((coeff ℚ p) M = (coeff ℚ p) N) :=
+power_series.X*M = power_series.X*N → ((coeff ℚ p) M = (coeff ℚ p) N) :=
 begin
-  simp,
+  intro h,
+  simp at h,
+  sorry,
 end
 
 -- this is missing in mathlib?!
