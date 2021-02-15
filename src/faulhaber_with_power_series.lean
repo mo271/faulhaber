@@ -174,47 +174,90 @@ begin
   (-1)^n*(coeff ℚ n) (mk(λ n, (-1)^n*(coeff ℚ n) ψ))) := (minus_X_fw (mk(λ n, (-1)^n*(coeff ℚ n) φ))
   (mk(λ n, (-1)^n*(coeff ℚ n) ψ))) h,
   simp at g,
-  sorry,
+  simp only [power_series.ext_iff] at g,
+  simp at g,
+  have hpn: ∀ n:ℕ, ((-1:ℚ)^n) ≠ 0 :=
+  begin
+    intro n,
+    apply pow_ne_zero,
+    rw [ne.def, neg_eq_zero],
+    exact one_ne_zero,
+  end,
+  simp [hpn] at g,
+  exact power_series.ext_iff.mpr g,
  end
 
  lemma minus_X_mul (φ ψ: power_series ℚ):
  (mk(λ n, (-1:ℚ)^n*(coeff ℚ n) φ) *  mk(λ n, (-1)^n*(coeff ℚ n) ψ)) =
- mk(λ n, (-1)^n*(coeff ℚ n) (φ*ψ)) := by sorry
+ mk(λ n, (-1)^n*(coeff ℚ n) (φ*ψ)) :=
+ begin
+   ext,
+   simp [coeff_mul],
+   sorry,
+ end
 
 
 lemma expmxm1: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (exp ℚ - 1)) =
- (1 - exp ℚ)* mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) := by sorry
+ (1 - exp ℚ)* mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) :=
+ begin
+   ext,
+   rw [coeff_mul],
+   sorry,
+ end
 
 lemma aux_exp2: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (X * exp ℚ)) =
-(-X)*mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) := by sorry,
+(-X)*mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) :=
+begin
+  sorry,
+end
 
 theorem bernoulli_power_series':
   (exp ℚ - 1) * power_series.mk (λ n,
   ((-1)^n * bernoulli n / nat.factorial n : ℚ)) = X :=
 begin
   have h: power_series.mk (λ n, (bernoulli n / nat.factorial n : ℚ)) * (exp ℚ - 1)
-  = X * exp ℚ := by sorry,
+  = X * exp ℚ :=
+  begin
+    simp [bernoulli_power_series],
+  end,
   rw minus_X at h,
   rw ←minus_X_mul at h,
   rw [expmxm1] at h,
   rw [aux_exp2] at h,
   let f1 := mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (mk (λ (n : ℕ), bernoulli n / ↑(n.factorial)))),
   let f2 := 1 - exp ℚ,
+  have hf2 : f2 = 1 - exp ℚ := by refl,
   let f3 := mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)),
   rw [←(mul_assoc f1 f2 f3)] at h,
   have hf3: f3 = mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) := by refl,
   rw [←hf3] at h,
-  have hf3_nonzero: f3≠ 0 := by sorry,
+  have hf3_nonzero: f3 ≠ 0 :=
+  begin
+    rw [hf3],
+    simp [power_series.ext_iff],
+    use 1,
+    simp,
+  end,
   have g: f1*f2 = -X :=
   begin
     apply mul_right_cancel' hf3_nonzero h,
   end,
   have hf1: f1 = mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (mk (λ (n : ℕ), bernoulli n / ↑(n.factorial)))) := by refl,
   simp at hf1,
-  have hf1': f1 =mk (λ (n : ℕ), (-1) ^ n * bernoulli n / ↑(n.factorial)) := by sorry,
+  have hf1': f1 = mk (λ (n : ℕ), (-1) ^ n * bernoulli n / ↑(n.factorial)) :=
+  begin
+    simp [hf1],
+    simp [power_series.ext_iff],
+    intro n,
+    rw [mul_div_assoc],
+  end,
   rw [←hf1'],
-  have hf2: -f2 = (exp ℚ - 1):= by sorry,
-  rw [←hf2],
+  have hf2':  - f2 = (exp ℚ - 1) :=
+  begin
+    rw [hf2],
+    ring,
+  end,
+  rw [←hf2'],
   rw [←neg_one_mul],
   rw [mul_assoc],
   rw [mul_comm f2],
@@ -288,7 +331,8 @@ begin
       simp only [div_eq_mul_inv],
       have hqfac: (((((q:ℕ)  + 1).factorial /
        ((k.factorial:ℕ) * (((q - k).factorial:ℕ) * ((q - k):ℕ) + (1:ℕ) ):ℕ))):ℚ )
-      =  (((q + 1).factorial:ℚ)  / ((k.factorial:ℚ)  * ((q - k).factorial * (q - k + 1)))) := by sorry,
+      =  (((q + 1).factorial:ℚ)  / ((k.factorial:ℚ) *
+       ((q - k).factorial * (q - k + 1)))) := by sorry,
       --rw [hqfac], -- doesn't work because lean somehow knows that the fraction from "choose" is in fact an integer...
       sorry,
     end,
@@ -317,6 +361,7 @@ theorem power_series_equal (n:ℕ):
    mk (λ (n : ℕ), (k:ℚ) ^ n / ↑(n.factorial))) =
    (finset.range n).sum(λ k, expk k) :=
    begin
+     simp,
      sorry,
    end,
    rw [hfin],
@@ -328,7 +373,10 @@ theorem power_series_equal (n:ℕ):
   end,
   have hexpnezero: (exp ℚ - 1) ≠ 0 :=
   begin
-    sorry,
+    rw [exp],
+    simp [power_series.ext_iff],
+    use 1,
+    simp,
   end,
   apply mul_left_cancel' hexpnezero h,
 
@@ -343,7 +391,7 @@ theorem faulhaber_long' (n: ℕ): ∀p,
    exact power_series.ext_iff.mp (power_series_equal n),
  end
 
-theorem faulhaber' (n p :ℕ)(hp: 0 <p) :
+theorem faulhaber' (n p:ℕ):
 (finset.range n).sum(λk, (k:ℚ)^p) =
 ((finset.range p.succ).sum(λ i,
  (-1)^i*(bernoulli i)*(p.succ.choose i)*n^(p + 1 - i)/p.succ)) :=
@@ -383,6 +431,7 @@ begin
  exact hp hfl,
 end
 
+--somebody else did it already, update and use that
 lemma bernoulli_odd (n:ℕ) (hn: 1 < n): odd n → bernoulli n = 0 :=
 begin
   rintro ⟨k, h⟩,
@@ -410,7 +459,7 @@ lemma faulhaber (n:ℕ) (p:ℕ) (hp: 0 <p):
 *n^(p + 1 - j)/(p.succ)))  :=
 begin
   rw [finset.sum_range_succ],
-  rw [faulhaber' n p hp],
+  rw [faulhaber' n p],
   have h2: (1:ℕ).succ ≤ p.succ :=
   begin
     apply nat.succ_le_succ,
