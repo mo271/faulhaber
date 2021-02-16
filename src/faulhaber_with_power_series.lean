@@ -188,8 +188,8 @@ begin
  end
 
  lemma minus_X_mul (φ ψ: power_series ℚ):
- (mk(λ n, (-1:ℚ)^n*(coeff ℚ n) φ) *  mk(λ n, (-1)^n*(coeff ℚ n) ψ)) =
- mk(λ n, (-1)^n*(coeff ℚ n) (φ*ψ)) :=
+ (mk(λ n, (-1:ℚ)^n*(coeff ℚ n) φ) *  mk(λ n, (-1:ℚ)^n*(coeff ℚ n) ψ)) =
+ mk(λ n, (-1:ℚ)^n*(coeff ℚ n) (φ*ψ)) :=
  begin
    ext,
    simp [coeff_mul],
@@ -323,7 +323,7 @@ begin
       rw [h_exp_fac2],
       rw [mul_comm ↑(q.factorial)],
       have hqqsucc: (q:ℚ)  + 1 = q.succ := by rw [←nat.cast_succ],
-      have hqqsucc': (q:ℕ)  + 1 = q.succ := by sorry,
+      have hqqsucc': (q:ℕ)  + 1 = q.succ := by simp,
       simp only [hqqsucc],
       have hcoeq: ((q.succ):ℚ) * ((q.factorial):ℚ) =(((q.succ.factorial:ℕ)):ℚ) := by norm_cast,
       rw [hcoeq],
@@ -336,7 +336,7 @@ begin
       -- by sorry,
       --rw [hqfac],
       rw [hqqsucc'],
-      have hqsuccnezero: q.succ ≠ 0 := by sorry,
+      have hqsuccnezero: q.succ ≠ 0 := by contradiction,
       rw [mul_assoc ],
       --rw [mul_comm (↑(q.succ.factorial))⁻¹],
       rw [inv_eq_one_div ↑(q.succ.factorial)],
