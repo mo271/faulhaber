@@ -323,18 +323,25 @@ begin
       rw [h_exp_fac2],
       rw [mul_comm ↑(q.factorial)],
       have hqqsucc: (q:ℚ)  + 1 = q.succ := by rw [←nat.cast_succ],
+      have hqqsucc': (q:ℕ)  + 1 = q.succ := by sorry,
       simp only [hqqsucc],
       have hcoeq: ((q.succ):ℚ) * ((q.factorial):ℚ) =(((q.succ.factorial:ℕ)):ℚ) := by norm_cast,
       rw [hcoeq],
       rw [mul_comm (↑(q.succ.factorial))⁻¹ ],
       rw [mul_assoc ((n:ℚ) ^ (q + 1 - k))],
       simp only [div_eq_mul_inv],
-      have hqfac: (((((q:ℕ)  + 1).factorial /
-       ((k.factorial:ℕ) * (((q - k).factorial:ℕ) * ((q - k):ℕ) + (1:ℕ) ):ℕ))):ℚ )
-      =  (((q + 1).factorial:ℚ)  / ((k.factorial:ℚ) *
-       ((q - k).factorial * (q - k + 1)))) := by sorry,
-      --rw [hqfac], -- doesn't work because lean somehow knows that the fraction from "choose" is in fact an integer...
-      sorry,
+      --have hqfac: ((q.succ.factorial:ℕ )/
+      --((k.factorial:ℕ)  * ((q - k).factorial * (q - k + 1)):ℕ))
+      -- (((q.succ.factorial):ℚ)  / (k.factorial * ((q - k).factorial * (q - k + 1)))):=
+      -- by sorry,
+      --rw [hqfac],
+      rw [hqqsucc'],
+      have hqsuccnezero: q.succ ≠ 0 := by sorry,
+      rw [mul_assoc ],
+      --rw [mul_comm (↑(q.succ.factorial))⁻¹],
+      rw [inv_eq_one_div ↑(q.succ.factorial)],
+      --rw [div_mul_div_cancel],
+      simp [div_div_cancel' hqsuccnezero],
     end,
     rw [hfac],
   end,
@@ -361,8 +368,7 @@ theorem power_series_equal (n:ℕ):
    mk (λ (n : ℕ), (k:ℚ) ^ n / ↑(n.factorial))) =
    (finset.range n).sum(λ k, expk k) :=
    begin
-     simp,
-     sorry,
+     simp [expkrw],
    end,
    rw [hfin],
    rw [special_sum_inf_geo_seq],
@@ -379,7 +385,6 @@ theorem power_series_equal (n:ℕ):
     simp,
   end,
   apply mul_left_cancel' hexpnezero h,
-
  end
 
 theorem faulhaber_long' (n: ℕ): ∀p,
