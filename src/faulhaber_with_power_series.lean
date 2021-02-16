@@ -9,15 +9,13 @@ import number_theory.bernoulli
 import data.finset
 import data.finset.basic
 import data.nat.basic
+import data.finset.nat_antidiagonal
 
 import ring_theory.power_series.basic
 
 open power_series
 
-lemma test (a b c:ℚ):  (a + b) * c  = (a * c + b * c):=
-begin
-  convert add_mul a b c,
-end
+lemma test (a:ℕ ):  (odd a.succ.succ = (odd a)):= by library_search,
 
 #check exp ℚ
 
@@ -67,12 +65,24 @@ begin
   refl,
 end
 
+#check add_pow
+
+lemma add_pow_antidiagonal:  ∀ (x y : ℚ) (n : ℕ),
+    (x + y) ^ n = (finset.nat.antidiagonal n).sum (λ (p : ℕ × ℕ),
+    x ^ p.fst * y ^ (p.snd) * ↑(n.choose p.fst)) :=
+    begin
+      simp [add_pow],
+      intros x y n,
+
+    end
+
 lemma expk' (k:ℕ): (exp ℚ)^k = expk k :=
 begin
   induction k with k h,
   rw [expk],
   ext,
-  simp,
+  simp only [coeff_mk, coeff_one, nat.nat_zero_eq_zero, nat.factorial,
+  nat.cast_zero, pow_zero],
   split_ifs,
   { simp [h] },
   { simp [h] },
@@ -80,7 +90,7 @@ begin
   ext,
   rw [coeff_mul],
   simp [expk, exp],
-  sorry, -- binomial rewrite see `add_pow` or something similar
+  sorry, -- use add_pow
 end
 
 lemma expk_minus_one_coeff (n m:ℕ): (coeff ℚ m) ((expk n) - 1) =
@@ -110,6 +120,7 @@ begin
   ring,
 end
 
+
 theorem special_sum_inf_geo_seq (n:ℕ):
  (exp ℚ - 1) * (finset.range n).sum(λ k, expk k) = ((expk n) - 1) :=
 begin
@@ -118,7 +129,6 @@ begin
   simp only [expk', mul_comm] at *,
   exact hone,
 end
-
 
 
 theorem expand_fraction (n:ℕ):
@@ -138,8 +148,35 @@ begin
   rw [expk],
   rw [power_series.coeff_mk],
   simp [power_series.coeff_X],
-  --split antidiagonal into two pieces..,
-  sorry,
+  have hnsucc: ∃ (m:ℕ), m.succ = n_1 :=
+  begin
+    use n_1 - 1,
+    exact nat.succ_pred_eq_of_pos h_ge_zero,
+  end,
+  cases hnsucc with m hm,
+  rw [←hm],
+  rw [finset.nat.sum_antidiagonal_succ],
+  simp,
+  by_cases hmz: m = 0,
+  rw [hmz],
+  rw [finset.nat.antidiagonal_zero],
+  simp,
+  have hmsucc: ∃ (p:ℕ), p.succ = m :=
+  begin
+    have h_ge_zero: m > 0 :=
+    begin
+      exact nat.pos_of_ne_zero hmz,
+    end,
+    use m - 1,
+    exact nat.succ_pred_eq_of_pos h_ge_zero,
+  end,
+  cases hmsucc with p hp,
+  rw [←hp],
+  rw [finset.nat.sum_antidiagonal_succ],
+  by_cases hpz: p = 0,
+  rw [hpz],
+  simp,
+  simp,
   have hn_1: n_1 = 0 := by linarith,
   rw [expk],
   simp only [hn_1],
@@ -156,9 +193,7 @@ lemma minus_X_fw (φ ψ: power_series ℚ):
 begin
   rintro rfl,
   refl,
- end
-
-
+end
 
 lemma minus_X (φ ψ: power_series ℚ):
 (φ = ψ) ↔  (
@@ -188,13 +223,9 @@ begin
  end
 
  lemma minus_X_mul (φ ψ: power_series ℚ):
- (mk(λ n, (-1:ℚ)^n*(coeff ℚ n) φ) *  mk(λ n, (-1:ℚ)^n*(coeff ℚ n) ψ)) =
+ (mk(λ n, (-1:ℚ)^n*(coeff ℚ n) φ) * mk(λ n, (-1:ℚ)^n*(coeff ℚ n) ψ)) =
  mk(λ n, (-1:ℚ)^n*(coeff ℚ n) (φ*ψ)) :=
- begin
-   ext,
-   simp [coeff_mul],
-   sorry,
- end
+ (ring_hom.map_mul (rescale (-1 : ℚ)) φ ψ).symm
 
 
 lemma expmxm1: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (exp ℚ - 1)) =
@@ -202,13 +233,73 @@ lemma expmxm1: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (exp ℚ - 1)) =
  begin
    ext,
    rw [coeff_mul],
-   sorry,
+   simp,
+   by_cases h: n=0,
+   rw[h],
+   simp,
+   have hnsucc: ∃ (p:ℕ), p.succ = n :=
+   begin
+    have h_ge_zero: n > 0 :=
+    begin
+      exact nat.pos_of_ne_zero h,
+    end,
+    use n - 1,
+    exact nat.succ_pred_eq_of_pos h_ge_zero,
+  end,
+  cases hnsucc with p hp,
+  rw [←hp],
+  rw [finset.nat.sum_antidiagonal_succ],
+  have hsuccnezero: ¬ p.succ = 0 := ne_of_eq_of_ne hp h,
+  simp [hsuccnezero],
+  sorry,
  end
+
+variables {R : Type*} [ring R]
+
+@[simp] lemma neg_one_pow_succ_succ {m : ℕ} : (-1 : R)^m.succ.succ = (-1)^m :=
+begin
+  change _ ^ (m + 2) = _,
+  simp [pow_add],
+end
+
+@[simp] lemma neg_one_pow_succ_of_odd {m : ℕ}: (-1 : R) ^ (m + 1) = -(-1)^m :=
+by simp [pow_add]
+
+#check polynomial.coeff_X_mul_zero
+#check power_S.coeff_X_mul_zero
+
+/--
+lemma aux_exp2: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (X * exp ℚ)) =
+(-X)*mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) :=
+begin
+  ext n,
+  cases n,
+  { simp only [←neg_mul_eq_neg_mul],
+  simp only [mul_comm X (mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ))) ],
+  simp only [neg_mul_eq_neg_mul],
+  simp only [coeff_zero_mul_X],
+  simp only [coeff_mk, linear_map.map_neg, mul_zero, neg_zero] },
+  rw [mul_comm X, ←neg_mul_eq_neg_mul, mul_comm X, linear_map.map_neg],
+  simp only [coeff_succ_mul_X, neg_mul_eq_neg_mul_symm, neg_one_pow_succ_of_odd, coeff_mk],
+end
+-/
 
 lemma aux_exp2: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (X * exp ℚ)) =
 (-X)*mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) :=
 begin
-  sorry,
+  ext,
+  simp only [coeff_mul, coeff_X, neg_mul_eq_neg_mul_symm, one_div, coeff_mk, linear_map.map_neg, nat.factorial, coeff_exp,
+  boole_mul, ring_hom.id_apply, rat.algebra_map_rat_rat],
+  cases n with p,
+  { simp only [if_false, finset.nat.antidiagonal_zero, finset.sum_singleton, zero_ne_one, mul_zero, neg_zero]},
+  simp only [finset.nat.sum_antidiagonal_succ, add_left_eq_self, nat.factorial, nat.cast_succ, nat.factorial_succ, if_false,
+  zero_add, nat.cast_mul, zero_ne_one],
+  cases p with m,
+  { simp only [mul_one, nat.factorial_zero, if_true, eq_self_iff_true, nat.factorial_one, pow_one, finset.nat.antidiagonal_zero,
+  inv_one, nat.cast_one, finset.sum_singleton, pow_zero]},
+  simp only [finset.nat.sum_antidiagonal_succ, add_zero, if_true, eq_self_iff_true, nat.cast_succ, nat.factorial_succ,
+  add_eq_zero_iff, if_false, one_ne_zero, finset.sum_const_zero, nat.cast_mul, and_false],
+  simp [neg_one_pow_succ_succ],
 end
 
 theorem bernoulli_power_series':
@@ -330,18 +421,16 @@ begin
       rw [mul_comm (↑(q.succ.factorial))⁻¹ ],
       rw [mul_assoc ((n:ℚ) ^ (q + 1 - k))],
       simp only [div_eq_mul_inv],
-      --have hqfac: ((q.succ.factorial:ℕ )/
-      --((k.factorial:ℕ)  * ((q - k).factorial * (q - k + 1)):ℕ))
-      -- (((q.succ.factorial):ℚ)  / (k.factorial * ((q - k).factorial * (q - k + 1)))):=
-      -- by sorry,
+      have hqfac:0 = 0:= by sorry,
       --rw [hqfac],
       rw [hqqsucc'],
       have hqsuccnezero: q.succ ≠ 0 := by contradiction,
       rw [mul_assoc ],
       --rw [mul_comm (↑(q.succ.factorial))⁻¹],
       rw [inv_eq_one_div ↑(q.succ.factorial)],
+      --rw [div_div_eq_div_mul q.succ.factorial],
       --rw [div_mul_div_cancel],
-      simp [div_div_cancel' hqsuccnezero],
+      --simp [div_div_cancel' hqsuccnezero],
     end,
     rw [hfac],
   end,
@@ -436,21 +525,11 @@ begin
  exact hp hfl,
 end
 
---somebody else did it already, update and use that
-lemma bernoulli_odd (n:ℕ) (hn: 1 < n): odd n → bernoulli n = 0 :=
-begin
-  rintro ⟨k, h⟩,
-  rw [h],
-  rw [bernoulli],
-  sorry,
-end
-
-
 lemma bernoulli_fst_snd (n:ℕ): 1 < n → bernoulli n = (-1)^n * bernoulli n :=
 begin
   intro hn,
   by_cases odd n,
-  rw [bernoulli_odd n hn h],
+  rw [bernoulli_odd_eq_zero h hn],
   simp,
   have heven: even n := nat.even_iff_not_odd.mpr h,
   have heven_power: even n → (-(1:ℚ))^n = 1 := nat.neg_one_pow_of_even,
