@@ -127,6 +127,7 @@ begin
   rw [hnnm],
   simp only [one_pow, one_mul],
   rw [mul_comm  ((m.factorial):ℚ)⁻¹],
+  simp only [nat.factorial_mul_factorial_dvd_factorial hnm],
   sorry,
 end
 
@@ -307,29 +308,38 @@ begin
      exact nat.le_of_lt_succ hm,
   end,
   simp only [nat.choose_eq_factorial_div_factorial hmn],
-  simp,
+  simp only [one_pow, one_mul],
   rw ← mul_assoc,
-  simp,
+  simp only,
   ring,
-  simp,
+  simp only [mul_eq_mul_right_iff],
   left,
-  --just very simple tasks left
-  have help1: ((m.factorial * (n-m).factorial)) ∣ (n.factorial) :=
+  have hfacprod:  ↑(m.factorial * (n - m).factorial) ≠  0 :=
   begin
-    have help1a: m.factorial ∣ n.factorial := by  apply nat.factorial_dvd_factorial hmn,
-    have help1b: (n - m) ≤ n := by sorry,
-    have help1c: (n-m).factorial ∣ n.factorial := by  sorry,
-    sorry,
+    have hmfacnezero: m.factorial ≠ 0:= ne_of_gt m.factorial_pos,
+    have hnmfacnezero: (n-m).factorial ≠ 0 :=
+    begin
+      have hk: ∃ k, k = n - m:=
+      begin
+        simp only [exists_apply_eq_apply],
+      end,
+      refine ne_of_gt _,
+      cases hk with k hk,
+      have hkfac: k.factorial >0 :=  k.factorial_pos,
+      rw hk at hkfac,
+      exact hkfac,
+    end,
+    have hnn: m.factorial * (n - m).factorial ≠ 0 := mul_ne_zero hmfacnezero hnmfacnezero,
+    simp [hnn],
   end,
-  have help2:  ↑(m.factorial * (n - m).factorial) ≠  0:= by sorry,
   rw nat.cast_dvd,
   simp,
   rw ←division_def,
   rw ←division_def,
   rw div_div_eq_div_mul,
   simp [mul_comm],
-  exact help1,
-  simp [help2],
+  exact nat.factorial_mul_factorial_dvd_factorial hmn,
+  simp [hfacprod],
   simp [nat.factorial_ne_zero],
 end
 
@@ -513,16 +523,13 @@ begin
       rw [mul_comm (↑(q.succ.factorial))⁻¹ ],
       rw [mul_assoc ((n:ℚ) ^ (q + 1 - k))],
       simp only [div_eq_mul_inv],
-      have hqfac:0 = 0:= by sorry,
-      --rw [hqfac],
       rw [hqqsucc'],
+      --rw [nat.factorial_mul_factorial_dvd_factorial]
       have hqsuccnezero: q.succ ≠ 0 := by contradiction,
       rw [mul_assoc ],
-      --rw [mul_comm (↑(q.succ.factorial))⁻¹],
       rw [inv_eq_one_div ↑(q.succ.factorial)],
-      --rw [div_div_eq_div_mul q.succ.factorial],
-      --rw [div_mul_div_cancel],
-      --simp [div_div_cancel' hqsuccnezero],
+      --rw [nat.factorial_mul_factorial_dvd_factorial]
+      sorry,
     end,
     rw [hfac],
   end,
