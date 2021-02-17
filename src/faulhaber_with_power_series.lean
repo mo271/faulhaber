@@ -270,21 +270,44 @@ begin
   rw [coeff_mul],
   simp only [one_div, coeff_mk, coeff_one, nat.factorial,
   coeff_exp, ring_hom.id_apply, rat.algebra_map_rat_rat],
-  have zero_pow_ite: 0^n = (ite(n=0) (1:ℚ)  0) :=
+  have zero_pow_ite_fac: 0^n/((n.factorial:ℚ)) =(ite(n=0) (1:ℚ) 0):=
   begin
     induction n with n hn,
-    simp only [if_true, eq_self_iff_true, pow_zero],
-    simp only [pow_succ, hn, if_t_t, mul_boole],
+    simp only [mul_one, nat.factorial_zero, if_true, eq_self_iff_true,
+    nat.factorial_one, nat.cast_one, pow_zero],
+    simp only [div_one],
     have hnsucc_zero: ¬ n.succ = 0 := nat.succ_ne_zero n,
     simp only [hnsucc_zero, if_false],
+    have hsuccfac: n.succ.factorial ≠  0 := ne_of_gt (nat.factorial_pos _),
+    simp only [nat.succ_pos', div_eq_zero_iff, true_or, zero_pow_eq_zero],
   end,
-  rw [←zero_pow_ite],
+  rw [←zero_pow_ite_fac],
   have one_minus_one_eq_zero: 1 + (-1) = (0:ℚ) :=
   begin
     simp only [add_right_neg],
   end,
   rw [←one_minus_one_eq_zero],
   rw [add_pow],
+  let f:ℕ → ℕ → ℚ := λ a : ℕ, λ b : ℕ,
+  (((a.factorial))⁻¹ * ((-1) ^ b * ((b.factorial))⁻¹)),
+  rw [finset.nat.sum_antidiagonal_eq_sum_range_succ f],
+  have hfacnezero: (n.factorial:ℚ)  ≠ 0 := by exact_mod_cast n.factorial_ne_zero,
+  symmetry,
+  rw [div_eq_iff hfacnezero],
+  rw [finset.sum_mul],
+  have hsucc: n.succ = n + 1 := by refl,
+  simp only [←hsucc],
+  refine finset.sum_congr rfl _,
+  intro m,
+  intro hm,
+  simp only [f],
+  have hmn: m ≤ n :=
+  begin
+     rw [finset.mem_range] at hm,
+     exact nat.le_of_lt_succ hm,
+  end,
+  simp only [nat.choose_eq_factorial_div_factorial hmn],
+  simp,
   sorry,
 end
 
