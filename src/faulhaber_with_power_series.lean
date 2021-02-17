@@ -308,7 +308,29 @@ begin
   end,
   simp only [nat.choose_eq_factorial_div_factorial hmn],
   simp,
-  sorry,
+  rw ← mul_assoc,
+  simp,
+  ring,
+  simp,
+  left,
+  --just very simple tasks left
+  have help1: ((m.factorial * (n-m).factorial)) ∣ (n.factorial) :=
+  begin
+    have help1a: m.factorial ∣ n.factorial := by  apply nat.factorial_dvd_factorial hmn,
+    have help1b: (n - m) ≤ n := by sorry,
+    have help1c: (n-m).factorial ∣ n.factorial := by  sorry,
+    sorry,
+  end,
+  have help2:  ↑(m.factorial * (n - m).factorial) ≠  0:= by sorry,
+  rw nat.cast_dvd,
+  simp,
+  rw ←division_def,
+  rw ←division_def,
+  rw div_div_eq_div_mul,
+  simp [mul_comm],
+  exact help1,
+  simp [help2],
+  simp [nat.factorial_ne_zero],
 end
 
 lemma expmxm1: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (exp ℚ - 1)) =
