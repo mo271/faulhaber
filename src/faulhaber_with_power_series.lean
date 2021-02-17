@@ -15,8 +15,6 @@ import ring_theory.power_series.basic
 
 open power_series
 
-lemma test (a:ℕ ):  (odd a.succ.succ = (odd a)):= by library_search,
-
 #check exp ℚ
 
 
@@ -67,14 +65,6 @@ end
 
 #check add_pow
 
-lemma add_pow_antidiagonal:  ∀ (x y : ℚ) (n : ℕ),
-    (x + y) ^ n = (finset.nat.antidiagonal n).sum (λ (p : ℕ × ℕ),
-    x ^ p.fst * y ^ (p.snd) * ↑(n.choose p.fst)) :=
-    begin
-      simp [add_pow],
-      intros x y n,
-      sorry,
-    end
 
 lemma expk' (k:ℕ): (exp ℚ)^k = expk k :=
 begin
@@ -92,7 +82,7 @@ begin
   simp [expk, exp],
   have hf: (n.factorial:ℚ) ≠ 0 :=
   begin
-    simp [n.factorial_ne_zero],
+    simp only [n.factorial_ne_zero, ne.def, nat.cast_eq_zero, not_false_iff],
   end,
   rw [mul_mul_div ((finset.nat.antidiagonal n).sum
   (λ (x : ℕ × ℕ), (↑(x.fst.factorial))⁻¹ *
@@ -100,7 +90,44 @@ begin
   rw [←div_eq_mul_one_div],
   rw [div_left_inj' hf],
   simp only,
-  sorry, -- use add_pow
+  let  f: ℕ →  ℕ → ℚ := λ a:ℕ, λ b: ℕ,
+  ((↑(a.factorial))⁻¹ * (↑k ^ b / ↑(b.factorial))),
+  simp only [finset.nat.sum_antidiagonal_eq_sum_range_succ f],
+  have hfab: ∀ (a b:ℕ), f a b =
+  ((↑(a.factorial))⁻¹ * (↑k ^ b / ↑(b.factorial))) :=
+  begin
+    intros,
+    refl,
+  end,
+  rw [add_comm ↑k],
+  rw [add_pow],
+  rw [finset.sum_mul],
+  have hsucc: n.succ = n + 1 := by refl,
+  simp only [←hsucc],
+  refine finset.sum_congr rfl _,
+  intro m,
+  intro hm,
+  rw [hfab],
+  rw [finset.mem_range] at hm,
+  have hnmn: n - m ≤ n :=
+  begin
+    apply nat.sub_le_left_of_le_add,
+    apply nat.le_add_left,
+  end,
+  have hnm: m ≤ n :=
+  begin
+    exact nat.le_of_lt_succ hm,
+  end,
+  rw [←nat.choose_symm hnm],
+  rw [nat.choose_eq_factorial_div_factorial hnmn],
+  have hnnm: n - (n - m) = m :=
+  begin
+    exact nat.sub_sub_self hnm,
+  end,
+  rw [hnnm],
+  simp only [one_pow, one_mul],
+  rw [mul_comm  ((m.factorial):ℚ)⁻¹],
+  sorry,
 end
 
 lemma expk_minus_one_coeff (n m:ℕ): (coeff ℚ m) ((expk n) - 1) =
@@ -237,31 +264,41 @@ begin
  mk(λ n, (-1:ℚ)^n*(coeff ℚ n) (φ*ψ)) :=
  (ring_hom.map_mul (rescale (-1 : ℚ)) φ ψ).symm
 
+lemma exp_inv:  (exp ℚ) * mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ))  = 1 :=
+begin
+  ext,
+  rw [coeff_mul],
+  simp only [one_div, coeff_mk, coeff_one, nat.factorial,
+  coeff_exp, ring_hom.id_apply, rat.algebra_map_rat_rat],
+  have zero_pow_ite: 0^n = (ite(n=0) (1:ℚ)  0) :=
+  begin
+    induction n with n hn,
+    simp only [if_true, eq_self_iff_true, pow_zero],
+    simp only [pow_succ, hn, if_t_t, mul_boole],
+    have hnsucc_zero: ¬ n.succ = 0 := nat.succ_ne_zero n,
+    simp only [hnsucc_zero, if_false],
+  end,
+  rw [←zero_pow_ite],
+  have one_minus_one_eq_zero: 1 + (-1) = (0:ℚ) :=
+  begin
+    simp only [add_right_neg],
+  end,
+  rw [←one_minus_one_eq_zero],
+  rw [add_pow],
+  sorry,
+end
 
 lemma expmxm1: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (exp ℚ - 1)) =
  (1 - exp ℚ)* mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) :=
  begin
+   simp only [sub_mul, exp_inv],
    ext,
-   rw [coeff_mul],
-   simp,
-   by_cases h: n=0,
-   rw[h],
-   simp,
-   have hnsucc: ∃ (p:ℕ), p.succ = n :=
-   begin
-    have h_ge_zero: n > 0 :=
-    begin
-      exact nat.pos_of_ne_zero h,
-    end,
-    use n - 1,
-    exact nat.succ_pred_eq_of_pos h_ge_zero,
-  end,
-  cases hnsucc with p hp,
-  rw [←hp],
-  rw [finset.nat.sum_antidiagonal_succ],
-  have hsuccnezero: ¬ p.succ = 0 := ne_of_eq_of_ne hp h,
-  simp [hsuccnezero],
-  sorry,
+   simp only [one_div, coeff_mk, coeff_one, one_mul, coeff_exp,
+   ring_hom.id_apply, linear_map.map_sub, rat.algebra_map_rat_rat],
+   cases n,
+   simp only [mul_one, nat.factorial_zero, if_true, eq_self_iff_true,
+   nat.factorial_one, inv_one, nat.cast_one, mul_zero, pow_zero, sub_self],
+   simp only [n.succ_ne_zero, sub_zero, if_false],
  end
 
 variables {R : Type*} [ring R]
