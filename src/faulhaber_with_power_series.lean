@@ -73,7 +73,7 @@ lemma add_pow_antidiagonal:  ∀ (x y : ℚ) (n : ℕ),
     begin
       simp [add_pow],
       intros x y n,
-
+      sorry,
     end
 
 lemma expk' (k:ℕ): (exp ℚ)^k = expk k :=
@@ -90,6 +90,16 @@ begin
   ext,
   rw [coeff_mul],
   simp [expk, exp],
+  have hf: (n.factorial:ℚ) ≠ 0 :=
+  begin
+    simp [n.factorial_ne_zero],
+  end,
+  rw [mul_mul_div ((finset.nat.antidiagonal n).sum
+  (λ (x : ℕ × ℕ), (↑(x.fst.factorial))⁻¹ *
+  (↑k ^ x.snd / ↑(x.snd.factorial)))) hf],
+  rw [←div_eq_mul_one_div],
+  rw [div_left_inj' hf],
+  simp only,
   sorry, -- use add_pow
 end
 
@@ -502,12 +512,15 @@ begin
     (λ (i : ℕ), (-1) ^ i * bernoulli i * ↑(p.succ.choose i) * ↑n ^ (p + 1 - i))
     / ((↑p + 1) * ↑(p.factorial))) :=
     begin
-      --use finest.sum_mul and finset.sum_div repeately?
       simp [hfaulhaber_long'],
-      --simp [finset.sum_mul (finset.range p.succ)
-      --(λ i, (-1) ^ i * bernoulli i * ↑(p.succ.choose i) * ↑n ^ (p + 1 - i)) (↑(p.factorial))],
-
-      sorry -- use finset.sum_hom??
+      rw div_eq_mul_one_div,
+      simp [finset.sum_mul],
+      refine finset.sum_congr  _ _,
+      refl,
+      intro k,
+      intro hk,
+      rw div_eq_mul_one_div,
+      rw [one_div],
     end,
  clear hfaulhaber_long',
  rw [div_mul_eq_div_mul_one_div ] at hfl,
@@ -516,11 +529,14 @@ begin
  cases hfl,
  simp,
  rw [hfl],
- --use finest.sum_mul and finset.sum_div repeately?
- let hf := λ q:ℚ, q/((p:ℚ ) + 1),
- --rw [finset.sum_hom (finset.range p.succ) hf],
- -- simp [finset.sum_mul],
- sorry,
+ rw div_eq_mul_one_div,
+ simp [finset.sum_mul],
+ refine finset.sum_congr  _ _,
+ refl,
+ intro k,
+ intro hk,
+ rw div_eq_mul_one_div,
+ rw [one_div],
  by_contradiction,
  exact hp hfl,
 end
