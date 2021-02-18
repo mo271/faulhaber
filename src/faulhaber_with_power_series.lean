@@ -15,8 +15,6 @@ import ring_theory.power_series.basic
 
 open power_series
 
-#check exp ℚ
-
 
 lemma power_series_addition (ha hb: ℕ → ℚ):
 power_series.mk(ha) + power_series.mk(hb) =
@@ -62,9 +60,6 @@ lemma expkrw (k:ℕ ): (expk k) = power_series.mk (λ n, (k:ℚ)^n / n.factorial
 begin
   refl,
 end
-
-#check add_pow
-
 
 lemma expk' (k:ℕ): (exp ℚ)^k = expk k :=
 begin
@@ -128,7 +123,34 @@ begin
   simp only [one_pow, one_mul],
   rw [mul_comm  ((m.factorial):ℚ)⁻¹],
   simp only [nat.factorial_mul_factorial_dvd_factorial hnm],
-  sorry,
+  rw ← division_def,
+  rw div_div_eq_div_mul,
+  rw mul_comm,
+  have hfacprod:  ↑(m.factorial * (n - m).factorial) ≠  0 :=
+  begin
+    have hmfacnezero: m.factorial ≠ 0:= ne_of_gt m.factorial_pos,
+    have hnmfacnezero: (n-m).factorial ≠ 0 :=
+    begin
+      have hk: ∃ k, k = n - m:=
+      begin
+        simp only [exists_apply_eq_apply],
+      end,
+      refine ne_of_gt _,
+      cases hk with k hk,
+      have hkfac: k.factorial >0 :=  k.factorial_pos,
+      rw hk at hkfac,
+      exact hkfac,
+    end,
+    have hnn: m.factorial * (n - m).factorial ≠ 0 := mul_ne_zero hmfacnezero hnmfacnezero,
+    simp [hnn],
+  end,
+  rw nat.cast_dvd,
+  rw nat.cast_mul,
+  simp only [← mul_div_assoc, mul_comm],
+  rw mul_comm,
+  exact nat.factorial_mul_factorial_dvd_factorial hnm,
+  simp [hfacprod],
+  simp [nat.factorial_ne_zero],
 end
 
 lemma expk_minus_one_coeff (n m:ℕ): (coeff ℚ m) ((expk n) - 1) =
@@ -367,9 +389,6 @@ end
 @[simp] lemma neg_one_pow_succ_of_odd {m : ℕ}: (-1 : R) ^ (m + 1) = -(-1)^m :=
 by simp [pow_add]
 
-#check polynomial.coeff_X_mul_zero
-#check power_S.coeff_X_mul_zero
-
 /--
 lemma aux_exp2: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (X * exp ℚ)) =
 (-X)*mk (λ (n : ℕ), (-1) ^ n * (coeff ℚ n) (exp ℚ)) :=
@@ -524,13 +543,54 @@ begin
       rw [mul_assoc ((n:ℚ) ^ (q + 1 - k))],
       simp only [div_eq_mul_inv],
       rw [hqqsucc'],
-      --rw [nat.factorial_mul_factorial_dvd_factorial]
       have hqsuccnezero: q.succ ≠ 0 := by contradiction,
       rw [mul_assoc ],
       rw [inv_eq_one_div ↑(q.succ.factorial)],
-      --rw [nat.factorial_mul_factorial_dvd_factorial]
-      sorry,
-    end,
+      rw ← division_def,
+      rw div_eq_mul_one_div,
+      have hfacprod:  ↑(k.factorial * (q + 1 - k).factorial) ≠  0 := 
+      begin
+        have hmfacnezero: k.factorial ≠ 0:= ne_of_gt k.factorial_pos,
+        have hnmfacnezero: (q + 1 - k).factorial ≠ 0 :=
+          begin
+           have hm: ∃ m, m = q + 1 - k:=
+            begin
+              simp only [exists_apply_eq_apply],
+           end,
+          refine ne_of_gt _,
+          cases hm with m hm,
+          have hmfac: m.factorial >0 :=  m.factorial_pos,
+          rw hm at hmfac,
+          exact hmfac,
+        end,
+        have hnn: k.factorial * (q + 1 - k).factorial ≠ 0 := mul_ne_zero hmfacnezero hnmfacnezero,
+        simp [hnn],
+      end,
+      rw ← h_exp_fac2,
+      rw nat.cast_dvd,
+      simp only [← mul_div_assoc],
+      rw one_div_mul_cancel,
+      rw ← nat.cast_add_one,
+      rw ← nat.cast_mul,
+      rw mul_comm (q - k + 1) _,
+      rw ← h_exp_fac2,
+      rw mul_comm,
+      rw ← division_def,
+      rw div_div_eq_div_mul,
+      rw nat.cast_mul,
+      rw mul_comm (↑(k.factorial)) _,
+      simp,
+      rw not_or_distrib,
+      split,
+      refine ne.elim _,
+      exact nat.cast_add_one_ne_zero q,
+      refine ne.elim _,
+      exact nat.factorial_ne_zero q,
+      rw hqqsucc',
+      exact nat.factorial_mul_factorial_dvd_factorial (nat.le_of_lt g),
+      simp [hfacprod],
+      simp [nat.factorial_ne_zero],
+      end,
     rw [hfac],
   end,
   refine finset.sum_congr rfl _,
