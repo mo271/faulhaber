@@ -15,7 +15,6 @@ import ring_theory.power_series.basic
 
 open power_series
 
-
 lemma power_series_addition (ha hb: ℕ → ℚ):
 power_series.mk(ha) + power_series.mk(hb) =
 power_series.mk(λ z, (ha z) + (hb z)) :=
@@ -172,14 +171,10 @@ theorem sum_geo_seq (n:ℕ) (φ : (power_series ℚ)):
 ((finset.range n).sum(λ k, φ^k) * (φ - 1)) = ((φ^n) - 1) :=
 begin
   induction n with n h,
-  simp,
-  rw [finset.sum_range_succ],
-  rw [pow_succ'],
-  rw [add_mul],
-  rw [h],
+  simp only [finset.sum_empty, zero_mul, finset.range_zero, pow_zero, sub_self],
+  simp only [finset.sum_range_succ, pow_succ', add_mul ,h],
   ring,
 end
-
 
 theorem special_sum_inf_geo_seq (n:ℕ):
  (exp ℚ - 1) * (finset.range n).sum(λ k, expk k) = ((expk n) - 1) :=
@@ -190,13 +185,11 @@ begin
   exact hone,
 end
 
-
 theorem expand_fraction (n:ℕ):
 (1 - expk n) * X * (exp ℚ - 1)  = (1 - exp ℚ) * (expk n - 1) * X :=
 begin
   ring,
 end
-
 
 theorem right_series (n:ℕ):
 (expk n - 1) = X*power_series.mk (λ p, n^p.succ/(p.succ.factorial)) :=
@@ -243,8 +236,6 @@ begin
   rw [power_series.coeff_mk],
   simp,
 end
-
-
 
 lemma minus_X_fw (φ ψ: power_series ℚ):
 (φ = ψ) →  (
@@ -355,14 +346,14 @@ begin
     simp [hnn],
   end,
   rw nat.cast_dvd,
-  simp,
+  simp only [nat.cast_mul],
   rw ←division_def,
   rw ←division_def,
   rw div_div_eq_div_mul,
-  simp [mul_comm],
+  simp only [mul_comm],
   exact nat.factorial_mul_factorial_dvd_factorial hmn,
-  simp [hfacprod],
-  simp [nat.factorial_ne_zero],
+  simp only [ne.def, nat.cast_eq_zero, mul_eq_zero],
+  simp only [nat.factorial_ne_zero, not_false_iff, or_self],
 end
 
 lemma expmxm1: mk (λ (n : ℕ), (-1:ℚ) ^ n * (coeff ℚ n) (exp ℚ - 1)) =
@@ -477,14 +468,12 @@ begin
   simp,
 end
 
-
 -- this is missing in mathlib?!
 theorem power_series_mul_assoc (φ₁ φ₂ φ₃ : (power_series ℚ)) :
 φ₁ * (φ₂ * φ₃) = φ₁ * φ₂ * φ₃ :=
 begin
   rw mv_power_series.mul_assoc, --  I'm sure its somewhere
 end
-
 
 theorem cauchy_prod (n:ℕ):
 power_series.mk (λ n,
